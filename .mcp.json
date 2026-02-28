@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "AbletonMCP": {
+      "command": "python3",
+      "args": ["-m", "MCP_Server.server"],
+      "cwd": "."
+    }
+  }
+}
