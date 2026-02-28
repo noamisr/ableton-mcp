@@ -29,18 +29,26 @@ import traceback
 # All commands that modify Live state (create tracks, change playback, etc.)
 # must be listed here.
 MAIN_THREAD_COMMANDS = {
-    "create_midi_track",
+    # Core
+    "create_midi_track", "create_audio_track", "delete_track",
     "set_track_name",
-    "create_clip",
-    "add_notes_to_clip",
-    "set_clip_name",
+    "create_clip", "add_notes_to_clip", "set_clip_name",
+    "duplicate_clip", "delete_clip", "set_clip_loop",
     "set_tempo",
-    "fire_clip",
-    "stop_clip",
-    "start_playback",
-    "stop_playback",
+    "fire_clip", "stop_clip",
+    "start_playback", "stop_playback",
     "load_browser_item",
-    "set_song_time",
+    "set_song_time", "set_playback_position",
+    # Mixing
+    "set_track_volume", "set_track_panning", "set_track_mute",
+    "set_track_solo", "set_track_arm", "set_track_send", "set_master_volume",
+    # Scenes
+    "create_scene", "fire_scene", "delete_scene",
+    # Device control
+    "set_device_parameter", "set_device_enabled", "delete_device",
+    # Transport & Recording
+    "set_record_mode", "set_overdub", "set_metronome",
+    "capture_midi", "undo", "redo",
 }
 
 
@@ -145,6 +153,141 @@ def dispatch(command_type, params, song, app_fn, log_fn):
 
     elif command_type == "hot_reload_test":
         return hot_reload_test(song, log_fn)
+
+    # ---- playback position ------------------------------------------------
+    elif command_type == "get_playback_position":
+        return get_playback_position(song, log_fn)
+
+    elif command_type == "set_playback_position":
+        return set_playback_position(song, log_fn, params.get("position", 0.0))
+
+    # ---- mixing ------------------------------------------------------------
+    elif command_type == "set_track_volume":
+        return set_track_volume(song, log_fn,
+                                params.get("track_index", 0),
+                                params.get("volume", 0.85))
+
+    elif command_type == "set_track_panning":
+        return set_track_panning(song, log_fn,
+                                 params.get("track_index", 0),
+                                 params.get("panning", 0.0))
+
+    elif command_type == "set_track_mute":
+        return set_track_mute(song, log_fn,
+                              params.get("track_index", 0),
+                              params.get("mute", False))
+
+    elif command_type == "set_track_solo":
+        return set_track_solo(song, log_fn,
+                              params.get("track_index", 0),
+                              params.get("solo", False))
+
+    elif command_type == "set_track_arm":
+        return set_track_arm(song, log_fn,
+                             params.get("track_index", 0),
+                             params.get("arm", False))
+
+    elif command_type == "set_track_send":
+        return set_track_send(song, log_fn,
+                              params.get("track_index", 0),
+                              params.get("send_index", 0),
+                              params.get("value", 0.0))
+
+    elif command_type == "get_return_track_info":
+        return get_return_track_info(song, log_fn,
+                                     params.get("track_index", 0))
+
+    elif command_type == "set_master_volume":
+        return set_master_volume(song, log_fn, params.get("volume", 0.85))
+
+    # ---- tracks / scenes ---------------------------------------------------
+    elif command_type == "create_audio_track":
+        return create_audio_track(song, log_fn, params.get("index", -1))
+
+    elif command_type == "delete_track":
+        return delete_track(song, log_fn, params.get("track_index", 0))
+
+    elif command_type == "get_scene_info":
+        return get_scene_info(song, log_fn, params.get("scene_index", 0))
+
+    elif command_type == "create_scene":
+        return create_scene(song, log_fn, params.get("index", -1))
+
+    elif command_type == "fire_scene":
+        return fire_scene(song, log_fn, params.get("scene_index", 0))
+
+    elif command_type == "delete_scene":
+        return delete_scene(song, log_fn, params.get("scene_index", 0))
+
+    elif command_type == "duplicate_clip":
+        return duplicate_clip(song, log_fn,
+                              params.get("track_index", 0),
+                              params.get("clip_index", 0))
+
+    elif command_type == "delete_clip":
+        return delete_clip(song, log_fn,
+                           params.get("track_index", 0),
+                           params.get("clip_index", 0))
+
+    elif command_type == "get_clip_notes":
+        return get_clip_notes(song, log_fn,
+                              params.get("track_index", 0),
+                              params.get("clip_index", 0))
+
+    elif command_type == "set_clip_loop":
+        return set_clip_loop(song, log_fn,
+                             params.get("track_index", 0),
+                             params.get("clip_index", 0),
+                             params.get("loop_start", 0.0),
+                             params.get("loop_end", 4.0))
+
+    # ---- device control ----------------------------------------------------
+    elif command_type == "get_device_info":
+        return get_device_info(song, log_fn,
+                               params.get("track_index", 0),
+                               params.get("device_index", 0))
+
+    elif command_type == "get_device_parameters":
+        return get_device_parameters(song, log_fn,
+                                     params.get("track_index", 0),
+                                     params.get("device_index", 0))
+
+    elif command_type == "set_device_parameter":
+        return set_device_parameter(song, log_fn,
+                                    params.get("track_index", 0),
+                                    params.get("device_index", 0),
+                                    params.get("param_index", 0),
+                                    params.get("value", 0.0))
+
+    elif command_type == "set_device_enabled":
+        return set_device_enabled(song, log_fn,
+                                  params.get("track_index", 0),
+                                  params.get("device_index", 0),
+                                  params.get("enabled", True))
+
+    elif command_type == "delete_device":
+        return delete_device(song, log_fn,
+                             params.get("track_index", 0),
+                             params.get("device_index", 0))
+
+    # ---- transport & recording ---------------------------------------------
+    elif command_type == "set_record_mode":
+        return set_record_mode(song, log_fn, params.get("enabled", False))
+
+    elif command_type == "set_overdub":
+        return set_overdub(song, log_fn, params.get("enabled", False))
+
+    elif command_type == "set_metronome":
+        return set_metronome(song, log_fn, params.get("enabled", False))
+
+    elif command_type == "capture_midi":
+        return capture_midi(song, log_fn)
+
+    elif command_type == "undo":
+        return undo(song, log_fn)
+
+    elif command_type == "redo":
+        return redo(song, log_fn)
 
     else:
         raise ValueError("Unknown command: " + command_type)
@@ -529,6 +672,480 @@ def get_track_notes(song, log_fn, track_index, max_notes=50):
         log_fn("Error in get_track_notes: {0}".format(str(e)))
         log_fn(traceback.format_exc())
         return {"error": str(e), "track_index": track_index}
+
+
+# ---------------------------------------------------------------------------
+# Playback position
+# ---------------------------------------------------------------------------
+
+def get_playback_position(song, log_fn):
+    """Get the current arrangement playhead position in beats."""
+    try:
+        return {"position": song.current_song_time, "playing": song.is_playing}
+    except Exception as e:
+        log_fn("Error in get_playback_position: {0}".format(str(e)))
+        raise
+
+
+def set_playback_position(song, log_fn, position):
+    """Set the arrangement playhead to a beat position (does not stop/resume playback)."""
+    try:
+        song.current_song_time = float(position)
+        return {"position": song.current_song_time, "playing": song.is_playing}
+    except Exception as e:
+        log_fn("Error in set_playback_position: {0}".format(str(e)))
+        raise
+
+
+# ---------------------------------------------------------------------------
+# Mixing
+# ---------------------------------------------------------------------------
+
+def set_track_volume(song, log_fn, track_index, volume):
+    """Set a track's volume (0.0–1.0)."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        vol = max(0.0, min(1.0, float(volume)))
+        song.tracks[track_index].mixer_device.volume.value = vol
+        return {"volume": song.tracks[track_index].mixer_device.volume.value}
+    except Exception as e:
+        log_fn("Error in set_track_volume: {0}".format(str(e)))
+        raise
+
+
+def set_track_panning(song, log_fn, track_index, panning):
+    """Set a track's panning (-1.0 left … 1.0 right)."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        pan = max(-1.0, min(1.0, float(panning)))
+        song.tracks[track_index].mixer_device.panning.value = pan
+        return {"panning": song.tracks[track_index].mixer_device.panning.value}
+    except Exception as e:
+        log_fn("Error in set_track_panning: {0}".format(str(e)))
+        raise
+
+
+def set_track_mute(song, log_fn, track_index, mute):
+    """Mute or unmute a track."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        song.tracks[track_index].mute = bool(mute)
+        return {"mute": song.tracks[track_index].mute}
+    except Exception as e:
+        log_fn("Error in set_track_mute: {0}".format(str(e)))
+        raise
+
+
+def set_track_solo(song, log_fn, track_index, solo):
+    """Solo or unsolo a track."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        song.tracks[track_index].solo = bool(solo)
+        return {"solo": song.tracks[track_index].solo}
+    except Exception as e:
+        log_fn("Error in set_track_solo: {0}".format(str(e)))
+        raise
+
+
+def set_track_arm(song, log_fn, track_index, arm):
+    """Arm or disarm a track for recording."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        song.tracks[track_index].arm = bool(arm)
+        return {"arm": song.tracks[track_index].arm}
+    except Exception as e:
+        log_fn("Error in set_track_arm: {0}".format(str(e)))
+        raise
+
+
+def set_track_send(song, log_fn, track_index, send_index, value):
+    """Set a track's send level (0.0–1.0)."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        sends = song.tracks[track_index].mixer_device.sends
+        if send_index < 0 or send_index >= len(sends):
+            raise IndexError("Send index out of range")
+        v = max(0.0, min(1.0, float(value)))
+        sends[send_index].value = v
+        return {"send_index": send_index, "value": sends[send_index].value}
+    except Exception as e:
+        log_fn("Error in set_track_send: {0}".format(str(e)))
+        raise
+
+
+def get_return_track_info(song, log_fn, track_index):
+    """Get info about a return (aux) track."""
+    try:
+        if track_index < 0 or track_index >= len(song.return_tracks):
+            raise IndexError("Return track index out of range")
+        track = song.return_tracks[track_index]
+        devices = [{"index": i, "name": d.name, "class_name": d.class_name,
+                    "type": _get_device_type(d)}
+                   for i, d in enumerate(track.devices)]
+        return {
+            "index": track_index,
+            "name": track.name,
+            "volume": track.mixer_device.volume.value,
+            "panning": track.mixer_device.panning.value,
+            "mute": track.mute,
+            "solo": track.solo,
+            "devices": devices,
+        }
+    except Exception as e:
+        log_fn("Error in get_return_track_info: {0}".format(str(e)))
+        raise
+
+
+def set_master_volume(song, log_fn, volume):
+    """Set the master track volume (0.0–1.0)."""
+    try:
+        v = max(0.0, min(1.0, float(volume)))
+        song.master_track.mixer_device.volume.value = v
+        return {"volume": song.master_track.mixer_device.volume.value}
+    except Exception as e:
+        log_fn("Error in set_master_volume: {0}".format(str(e)))
+        raise
+
+
+# ---------------------------------------------------------------------------
+# Tracks & Scenes
+# ---------------------------------------------------------------------------
+
+def create_audio_track(song, log_fn, index):
+    """Create a new audio track at the given position."""
+    try:
+        song.create_audio_track(index)
+        new_index = len(song.tracks) - 1 if index == -1 else index
+        return {"index": new_index, "name": song.tracks[new_index].name}
+    except Exception as e:
+        log_fn("Error in create_audio_track: {0}".format(str(e)))
+        raise
+
+
+def delete_track(song, log_fn, track_index):
+    """Delete a track."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        song.delete_track(track_index)
+        return {"deleted": True, "track_count": len(song.tracks)}
+    except Exception as e:
+        log_fn("Error in delete_track: {0}".format(str(e)))
+        raise
+
+
+def get_scene_info(song, log_fn, scene_index):
+    """Get info about a scene including its clips across all tracks."""
+    try:
+        if scene_index < 0 or scene_index >= len(song.scenes):
+            raise IndexError("Scene index out of range")
+        scene = song.scenes[scene_index]
+        clip_slots = []
+        for ti, track in enumerate(song.tracks):
+            if scene_index < len(track.clip_slots):
+                slot = track.clip_slots[scene_index]
+                clip_info = None
+                if slot.has_clip:
+                    c = slot.clip
+                    clip_info = {"name": c.name, "length": c.length,
+                                 "is_playing": c.is_playing, "is_recording": c.is_recording}
+                clip_slots.append({"track_index": ti, "track_name": track.name,
+                                   "has_clip": slot.has_clip, "clip": clip_info})
+        return {
+            "index": scene_index,
+            "name": scene.name,
+            "tempo": scene.tempo if hasattr(scene, 'tempo') else None,
+            "clip_slots": clip_slots,
+        }
+    except Exception as e:
+        log_fn("Error in get_scene_info: {0}".format(str(e)))
+        raise
+
+
+def create_scene(song, log_fn, index):
+    """Create a new scene."""
+    try:
+        song.create_scene(index)
+        return {"index": index, "scene_count": len(song.scenes)}
+    except Exception as e:
+        log_fn("Error in create_scene: {0}".format(str(e)))
+        raise
+
+
+def fire_scene(song, log_fn, scene_index):
+    """Launch all clips in a scene."""
+    try:
+        if scene_index < 0 or scene_index >= len(song.scenes):
+            raise IndexError("Scene index out of range")
+        song.scenes[scene_index].fire()
+        return {"fired": True}
+    except Exception as e:
+        log_fn("Error in fire_scene: {0}".format(str(e)))
+        raise
+
+
+def delete_scene(song, log_fn, scene_index):
+    """Delete a scene."""
+    try:
+        if scene_index < 0 or scene_index >= len(song.scenes):
+            raise IndexError("Scene index out of range")
+        song.delete_scene(scene_index)
+        return {"deleted": True, "scene_count": len(song.scenes)}
+    except Exception as e:
+        log_fn("Error in delete_scene: {0}".format(str(e)))
+        raise
+
+
+def duplicate_clip(song, log_fn, track_index, clip_index):
+    """Duplicate a clip to the next empty slot in the same track."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        track = song.tracks[track_index]
+        if clip_index < 0 or clip_index >= len(track.clip_slots):
+            raise IndexError("Clip index out of range")
+        slot = track.clip_slots[clip_index]
+        if not slot.has_clip:
+            raise Exception("No clip in slot")
+        target_index = None
+        for i in range(clip_index + 1, len(track.clip_slots)):
+            if not track.clip_slots[i].has_clip:
+                target_index = i
+                break
+        if target_index is None:
+            raise Exception("No empty clip slot available after index {0}".format(clip_index))
+        slot.duplicate_clip_to(track.clip_slots[target_index])
+        return {"duplicated": True, "source_index": clip_index, "target_index": target_index}
+    except Exception as e:
+        log_fn("Error in duplicate_clip: {0}".format(str(e)))
+        raise
+
+
+def delete_clip(song, log_fn, track_index, clip_index):
+    """Delete a clip from a slot."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        track = song.tracks[track_index]
+        if clip_index < 0 or clip_index >= len(track.clip_slots):
+            raise IndexError("Clip index out of range")
+        slot = track.clip_slots[clip_index]
+        if not slot.has_clip:
+            raise Exception("No clip in slot")
+        slot.delete_clip()
+        return {"deleted": True}
+    except Exception as e:
+        log_fn("Error in delete_clip: {0}".format(str(e)))
+        raise
+
+
+def get_clip_notes(song, log_fn, track_index, clip_index):
+    """Get MIDI notes from a session-view clip."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        track = song.tracks[track_index]
+        if clip_index < 0 or clip_index >= len(track.clip_slots):
+            raise IndexError("Clip index out of range")
+        slot = track.clip_slots[clip_index]
+        if not slot.has_clip:
+            raise Exception("No clip in slot")
+        clip = slot.clip
+        raw = clip.get_notes(0.0, 0, clip.length, 128)
+        notes = [{"pitch": n[0], "start_time": n[1], "duration": n[2],
+                  "velocity": n[3], "mute": n[4]} for n in raw]
+        return {"notes": notes, "count": len(notes), "clip_length": clip.length}
+    except Exception as e:
+        log_fn("Error in get_clip_notes: {0}".format(str(e)))
+        raise
+
+
+def set_clip_loop(song, log_fn, track_index, clip_index, loop_start, loop_end):
+    """Set loop start/end on a session-view clip."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        track = song.tracks[track_index]
+        if clip_index < 0 or clip_index >= len(track.clip_slots):
+            raise IndexError("Clip index out of range")
+        slot = track.clip_slots[clip_index]
+        if not slot.has_clip:
+            raise Exception("No clip in slot")
+        clip = slot.clip
+        clip.looping = True
+        clip.loop_start = float(loop_start)
+        clip.loop_end = float(loop_end)
+        return {"looping": clip.looping, "loop_start": clip.loop_start, "loop_end": clip.loop_end}
+    except Exception as e:
+        log_fn("Error in set_clip_loop: {0}".format(str(e)))
+        raise
+
+
+# ---------------------------------------------------------------------------
+# Device control
+# ---------------------------------------------------------------------------
+
+def get_device_info(song, log_fn, track_index, device_index):
+    """Get device info including all parameters."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        track = song.tracks[track_index]
+        if device_index < 0 or device_index >= len(track.devices):
+            raise IndexError("Device index out of range")
+        device = track.devices[device_index]
+        params = [{"index": i, "name": p.name, "value": p.value,
+                   "min": p.min, "max": p.max, "is_quantized": p.is_quantized}
+                  for i, p in enumerate(device.parameters)]
+        return {
+            "index": device_index,
+            "name": device.name,
+            "class_name": device.class_name,
+            "type": _get_device_type(device),
+            "is_active": device.is_active if hasattr(device, 'is_active') else None,
+            "parameters": params,
+        }
+    except Exception as e:
+        log_fn("Error in get_device_info: {0}".format(str(e)))
+        raise
+
+
+def get_device_parameters(song, log_fn, track_index, device_index):
+    """Get all parameters for a device."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        track = song.tracks[track_index]
+        if device_index < 0 or device_index >= len(track.devices):
+            raise IndexError("Device index out of range")
+        device = track.devices[device_index]
+        params = [{"index": i, "name": p.name, "value": p.value,
+                   "min": p.min, "max": p.max, "is_quantized": p.is_quantized}
+                  for i, p in enumerate(device.parameters)]
+        return {"device_name": device.name, "parameters": params}
+    except Exception as e:
+        log_fn("Error in get_device_parameters: {0}".format(str(e)))
+        raise
+
+
+def set_device_parameter(song, log_fn, track_index, device_index, param_index, value):
+    """Set a device parameter by index."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        track = song.tracks[track_index]
+        if device_index < 0 or device_index >= len(track.devices):
+            raise IndexError("Device index out of range")
+        device = track.devices[device_index]
+        if param_index < 0 or param_index >= len(device.parameters):
+            raise IndexError("Parameter index out of range")
+        param = device.parameters[param_index]
+        param.value = max(param.min, min(param.max, float(value)))
+        return {"name": param.name, "value": param.value}
+    except Exception as e:
+        log_fn("Error in set_device_parameter: {0}".format(str(e)))
+        raise
+
+
+def set_device_enabled(song, log_fn, track_index, device_index, enabled):
+    """Enable or disable a device (via its Device On parameter)."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        track = song.tracks[track_index]
+        if device_index < 0 or device_index >= len(track.devices):
+            raise IndexError("Device index out of range")
+        device = track.devices[device_index]
+        device.parameters[0].value = 1.0 if enabled else 0.0
+        return {"enabled": bool(device.parameters[0].value)}
+    except Exception as e:
+        log_fn("Error in set_device_enabled: {0}".format(str(e)))
+        raise
+
+
+def delete_device(song, log_fn, track_index, device_index):
+    """Remove a device from a track."""
+    try:
+        if track_index < 0 or track_index >= len(song.tracks):
+            raise IndexError("Track index out of range")
+        track = song.tracks[track_index]
+        if device_index < 0 or device_index >= len(track.devices):
+            raise IndexError("Device index out of range")
+        track.delete_device(device_index)
+        return {"deleted": True, "device_count": len(track.devices)}
+    except Exception as e:
+        log_fn("Error in delete_device: {0}".format(str(e)))
+        raise
+
+
+# ---------------------------------------------------------------------------
+# Transport & Recording
+# ---------------------------------------------------------------------------
+
+def set_record_mode(song, log_fn, enabled):
+    """Enable or disable Arrangement recording mode."""
+    try:
+        song.record_mode = bool(enabled)
+        return {"record_mode": song.record_mode}
+    except Exception as e:
+        log_fn("Error in set_record_mode: {0}".format(str(e)))
+        raise
+
+
+def set_overdub(song, log_fn, enabled):
+    """Enable or disable MIDI overdub."""
+    try:
+        song.overdub = bool(enabled)
+        return {"overdub": song.overdub}
+    except Exception as e:
+        log_fn("Error in set_overdub: {0}".format(str(e)))
+        raise
+
+
+def set_metronome(song, log_fn, enabled):
+    """Enable or disable the metronome."""
+    try:
+        song.metronome = bool(enabled)
+        return {"metronome": song.metronome}
+    except Exception as e:
+        log_fn("Error in set_metronome: {0}".format(str(e)))
+        raise
+
+
+def capture_midi(song, log_fn):
+    """Capture recently played MIDI into a clip."""
+    try:
+        song.capture_midi()
+        return {"captured": True}
+    except Exception as e:
+        log_fn("Error in capture_midi: {0}".format(str(e)))
+        raise
+
+
+def undo(song, log_fn):
+    """Undo the last action."""
+    try:
+        song.undo()
+        return {"undone": True}
+    except Exception as e:
+        log_fn("Error in undo: {0}".format(str(e)))
+        raise
+
+
+def redo(song, log_fn):
+    """Redo the last undone action."""
+    try:
+        song.redo()
+        return {"redone": True}
+    except Exception as e:
+        log_fn("Error in redo: {0}".format(str(e)))
+        raise
 
 
 # ---------------------------------------------------------------------------

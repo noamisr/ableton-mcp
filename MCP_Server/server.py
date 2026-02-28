@@ -112,6 +112,19 @@ class AbletonConnection:
             "create_clip", "add_notes_to_clip", "set_clip_name",
             "set_tempo", "fire_clip", "stop_clip", "set_device_parameter",
             "start_playback", "stop_playback", "load_instrument_or_effect",
+            # Mixing
+            "set_track_volume", "set_track_panning", "set_track_mute",
+            "set_track_solo", "set_track_arm", "set_track_send", "set_master_volume",
+            # Arrangement / Scenes
+            "delete_track", "create_scene", "fire_scene", "delete_scene",
+            "duplicate_clip", "delete_clip", "set_clip_loop",
+            # Device Control
+            "set_device_enabled", "delete_device",
+            # Transport & Recording
+            "set_record_mode", "set_overdub", "set_metronome",
+            "capture_midi", "undo", "redo",
+            "set_playback_position",
+            # Custom additions
             "set_song_time"
         ]
         
@@ -628,49 +641,7 @@ def get_browser_items_at_path(ctx: Context, path: str) -> str:
             logger.error(f"Error getting browser items at path: {error_msg}")
             return f"Error getting browser items at path: {error_msg}"
 
-@mcp.tool()
-def set_song_time(ctx: Context, time: float) -> str:
-    """
-    Move the playhead to a specific position in the arrangement.
-
-    Parameters:
-    - time: Position in beats (e.g. bar 5 in 3/4 = beat 12.0)
-    """
-    try:
-        ableton = get_ableton_connection()
-        result = ableton.send_command("set_song_time", {"time": time})
-        return f"Playhead moved to beat {result.get('current_song_time', time)}"
-    except Exception as e:
-        logger.error(f"Error setting song time: {str(e)}")
-        return f"Error setting song time: {str(e)}"
-
-@mcp.tool()
-def search_track_notes(ctx: Context, track_index: int) -> str:
-    """
-    Search for the first note in a track's arrangement and return its bar number.
-
-    Parameters:
-    - track_index: The index of the track to search for notes
-    """
-    try:
-        ableton = get_ableton_connection()
-        result = ableton.send_command("search_track_notes", {"track_index": track_index})
-
-        if result.get("found"):
-            bar_num = result.get("bar_number", 0)
-            beat = result.get("beat_in_bar", 0)
-            track_name = result.get("track_name", "Unknown")
-            note_details = result.get("note_details", {})
-            pitch = note_details.get("note_pitch", 0)
-            return f"First note found in track {track_index} ({track_name}) at Bar {bar_num}, Beat {beat}. Note pitch: {pitch}"
-        else:
-            error = result.get("message") or result.get("error", "No notes found")
-            return f"No notes found in track {track_index}: {error}"
-    except Exception as e:
-        logger.error(f"Error searching track notes: {str(e)}")
-        return f"Error searching track notes: {str(e)}"
-
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def load_drum_kit(ctx: Context, track_index: int, rack_uri: str, kit_path: str) -> str:
     """
     Load a drum rack and then load a specific drum kit into it.
@@ -1244,6 +1215,78 @@ def redo(ctx: Context) -> str:
     except Exception as e:
         logger.error(f"Error redoing: {str(e)}")
         return f"Error redoing: {str(e)}"
+
+
+@mcp.tool(annotations=MODIFYING)
+def set_song_time(ctx: Context, time: float) -> str:
+    """
+    Move the arrangement playhead to a specific beat position.
+    Stops playback if playing, seeks, then resumes.
+
+    Parameters:
+    - time: Position in beats (e.g. 147.0 = bar 50 in 3/4 at 90 BPM)
+    """
+    try:
+        ableton = get_ableton_connection()
+        result = ableton.send_command("set_song_time", {"time": time})
+        return f"Playhead moved to beat {result.get('song_time_set', time)} (was_playing={result.get('was_playing')})"
+    except Exception as e:
+        logger.error(f"Error setting song time: {str(e)}")
+        return f"Error setting song time: {str(e)}"
+
+
+@mcp.tool(annotations=READ_ONLY)
+def search_track_notes(ctx: Context, track_index: int) -> str:
+    """
+    Find the first note in a track's arrangement clips.
+    Returns bar number, beat position, pitch and clip name.
+    Useful for navigating to where a specific instrument starts playing.
+
+    Parameters:
+    - track_index: Index of the track to search (0-based)
+    """
+    try:
+        ableton = get_ableton_connection()
+        result = ableton.send_command("search_track_notes", {"track_index": track_index})
+        if not result.get("found"):
+            return f"No notes found in track {track_index}: {result.get('message', result.get('error', ''))}"
+        d = result.get("note_details", {})
+        return (
+            f"Track {track_index} ({result['track_name']}): "
+            f"first note at bar {result['bar_number']}, beat {round(result['beat_in_bar'], 3)} "
+            f"(beat time {result['note_time']}) — "
+            f"pitch {d.get('note_pitch')}, clip '{d.get('clip_name')}'"
+        )
+    except Exception as e:
+        logger.error(f"Error searching track notes: {str(e)}")
+        return f"Error searching track notes: {str(e)}"
+
+
+@mcp.tool(annotations=READ_ONLY)
+def get_track_notes(ctx: Context, track_index: int, max_notes: int = 50) -> str:
+    """
+    Return notes from a track's arrangement clips sorted by time,
+    with bar/beat annotations. Useful for analysing rhythmic patterns.
+
+    Parameters:
+    - track_index: Index of the track (0-based)
+    - max_notes: Maximum number of notes to return (default 50)
+    """
+    try:
+        ableton = get_ableton_connection()
+        result = ableton.send_command("get_track_notes", {"track_index": track_index, "max_notes": max_notes})
+        if "error" in result:
+            return f"Error: {result['error']}"
+        notes = result.get("notes", [])
+        if not notes:
+            return f"No notes found in track {track_index} ({result.get('track_name', '')})"
+        lines = [f"Track {track_index} ({result['track_name']}), {result['beats_per_bar']}/4 — {len(notes)} notes:"]
+        for n in notes:
+            lines.append(f"  Bar {n['bar']} beat {n['beat']} | pitch {n['pitch']} vel {n['velocity']} dur {n['duration']} | {n['clip']}")
+        return "\n".join(lines)
+    except Exception as e:
+        logger.error(f"Error getting track notes: {str(e)}")
+        return f"Error getting track notes: {str(e)}"
 
 
 # Main execution
