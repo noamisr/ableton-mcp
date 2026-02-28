@@ -242,7 +242,8 @@ class AbletonMCP(ControlSurface):
                                  "set_device_parameter", "set_device_enabled", "delete_device",
                                  # Recording & Transport
                                  "set_record_mode", "set_overdub", "set_metronome",
-                                 "capture_midi", "undo", "redo"]:
+                                 "capture_midi", "undo", "redo",
+                                 "set_playback_position"]:
                 # Use a thread-safe approach with a response queue
                 response_queue = queue.Queue()
                 
@@ -386,6 +387,9 @@ class AbletonMCP(ControlSurface):
                             result = self._undo()
                         elif command_type == "redo":
                             result = self._redo()
+                        elif command_type == "set_playback_position":
+                            position = params.get("position", 0.0)
+                            result = self._set_playback_position(position)
 
                         # Put the result in the queue
                         response_queue.put({"status": "success", "result": result})
@@ -449,6 +453,8 @@ class AbletonMCP(ControlSurface):
                 track_index = params.get("track_index", 0)
                 device_index = params.get("device_index", 0)
                 response["result"] = self._get_device_parameters(track_index, device_index)
+            elif command_type == "get_playback_position":
+                response["result"] = self._get_playback_position()
             else:
                 response["status"] = "error"
                 response["message"] = "Unknown command: " + command_type
@@ -751,7 +757,7 @@ class AbletonMCP(ControlSurface):
         """Stop playing the session"""
         try:
             self._song.stop_playing()
-            
+
             result = {
                 "playing": self._song.is_playing
             }
@@ -759,7 +765,32 @@ class AbletonMCP(ControlSurface):
         except Exception as e:
             self.log_message("Error stopping playback: " + str(e))
             raise
-    
+
+    def _get_playback_position(self):
+        """Get the current playback position in beats"""
+        try:
+            result = {
+                "position": self._song.current_song_time,
+                "playing": self._song.is_playing
+            }
+            return result
+        except Exception as e:
+            self.log_message("Error getting playback position: " + str(e))
+            raise
+
+    def _set_playback_position(self, position):
+        """Set the playback position in beats"""
+        try:
+            self._song.current_song_time = float(position)
+            result = {
+                "position": self._song.current_song_time,
+                "playing": self._song.is_playing
+            }
+            return result
+        except Exception as e:
+            self.log_message("Error setting playback position: " + str(e))
+            raise
+
     def _get_browser_item(self, uri, path):
         """Get a browser item by URI or path"""
         try:

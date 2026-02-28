@@ -122,7 +122,8 @@ class AbletonConnection:
             "set_device_enabled", "delete_device",
             # Transport & Recording
             "set_record_mode", "set_overdub", "set_metronome",
-            "capture_midi", "undo", "redo"
+            "capture_midi", "undo", "redo",
+            "set_playback_position"
         ]
         
         try:
@@ -182,15 +183,7 @@ class AbletonConnection:
 async def server_lifespan(server: FastMCP) -> AsyncIterator[Dict[str, Any]]:
     """Manage server startup and shutdown lifecycle"""
     try:
-        logger.info("AbletonMCP server starting up")
-        
-        try:
-            ableton = get_ableton_connection()
-            logger.info("Successfully connected to Ableton on startup")
-        except Exception as e:
-            logger.warning(f"Could not connect to Ableton on startup: {str(e)}")
-            logger.warning("Make sure the Ableton Remote Script is running")
-        
+        logger.info("AbletonMCP server starting up (will connect to Ableton on first tool call)")
         yield {}
     finally:
         global _ableton_connection
@@ -514,6 +507,33 @@ def stop_playback(ctx: Context) -> str:
     except Exception as e:
         logger.error(f"Error stopping playback: {str(e)}")
         return f"Error stopping playback: {str(e)}"
+
+@mcp.tool(annotations=READ_ONLY)
+def get_playback_position(ctx: Context) -> str:
+    """Get the current playback position in beats."""
+    try:
+        ableton = get_ableton_connection()
+        result = ableton.send_command("get_playback_position")
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        logger.error(f"Error getting playback position: {str(e)}")
+        return f"Error getting playback position: {str(e)}"
+
+@mcp.tool(annotations=MODIFYING)
+def set_playback_position(ctx: Context, position: float) -> str:
+    """
+    Jump to a specific position in the song.
+
+    Parameters:
+    - position: The position in beats to jump to (e.g., 0.0 for the start, 4.0 for beat 5)
+    """
+    try:
+        ableton = get_ableton_connection()
+        result = ableton.send_command("set_playback_position", {"position": position})
+        return f"Jumped to beat {position}"
+    except Exception as e:
+        logger.error(f"Error setting playback position: {str(e)}")
+        return f"Error setting playback position: {str(e)}"
 
 @mcp.tool(annotations=READ_ONLY)
 def get_browser_tree(ctx: Context, category_type: str = "all") -> str:

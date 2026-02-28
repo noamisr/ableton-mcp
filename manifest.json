@@ -1,5 +1,5 @@
 {
-  "manifest_version": "0.4",
+  "manifest_version": "0.3",
   "name": "ableton-mcp",
   "display_name": "Ableton Live",
   "version": "1.0.0",
@@ -31,7 +31,7 @@
     "entry_point": "MCP_Server/server.py",
     "mcp_config": {
       "command": "uv",
-      "args": ["run", "--with", ".", "python", "-m", "MCP_Server.server"],
+      "args": ["run", "--with", "${__dirname}", "python", "-m", "MCP_Server.server"],
       "env": {}
     }
   },
@@ -86,7 +86,9 @@
     {"name": "set_metronome", "description": "Toggle metronome click on/off"},
     {"name": "capture_midi", "description": "Capture recently played MIDI into a clip"},
     {"name": "undo", "description": "Undo the last action"},
-    {"name": "redo", "description": "Redo the last undone action"}
+    {"name": "redo", "description": "Redo the last undone action"},
+    {"name": "get_playback_position", "description": "Get current playback position in beats"},
+    {"name": "set_playback_position", "description": "Jump to a specific position in beats"}
   ],
   "tools_generated": false
 }
