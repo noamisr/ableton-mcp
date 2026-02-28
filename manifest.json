@@ -1,0 +1,94 @@
+{
+  "manifest_version": "0.3",
+  "name": "ableton-mcp",
+  "display_name": "Ableton Live",
+  "version": "1.0.0",
+  "description": "Control Ableton Live from Claude — create tracks, write MIDI, mix, launch clips, tweak devices, and more.",
+  "long_description": "Full integration with Ableton Live through the Model Context Protocol. Create MIDI and audio tracks, write notes into clips, control mixing (volume, pan, mute, solo, sends), manage scenes, tweak device parameters, control transport and recording, and browse instruments — all from natural language.\n\nRequires Ableton Live running with the AbletonMCP Remote Script installed.",
+  "author": {
+    "name": "Noam Israeli",
+    "url": "https://github.com/noamisr"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noamisr/ableton-mcp"
+  },
+  "homepage": "https://github.com/noamisr/ableton-mcp",
+  "support": "https://github.com/noamisr/ableton-mcp/issues",
+  "keywords": [
+    "ableton",
+    "music",
+    "midi",
+    "daw",
+    "music production",
+    "audio",
+    "live",
+    "mixing"
+  ],
+  "server": {
+    "type": "python",
+    "entry_point": "MCP_Server/server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--with", "${__dirname}", "python", "-m", "MCP_Server.server"],
+      "env": {}
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32"],
+    "runtimes": {
+      "python": ">=3.10"
+    }
+  },
+  "tools": [
+    {"name": "get_session_info", "description": "Get tempo, time signature, track count, and master volume"},
+    {"name": "get_track_info", "description": "Get track details including clips, devices, volume, pan, mute, solo, arm"},
+    {"name": "get_return_track_info", "description": "Get return track details (A=0, B=1, etc.)"},
+    {"name": "get_scene_info", "description": "Get scene details and clip slot contents across all tracks"},
+    {"name": "get_clip_notes", "description": "Read MIDI notes from a clip"},
+    {"name": "get_device_info", "description": "Get device name, type, and all parameters"},
+    {"name": "get_device_parameters", "description": "List all device parameters with min/max/value"},
+    {"name": "get_browser_tree", "description": "Browse available instruments, sounds, drums, and effects"},
+    {"name": "get_browser_items_at_path", "description": "Browse items at a specific browser path"},
+    {"name": "create_midi_track", "description": "Create a new MIDI track"},
+    {"name": "create_audio_track", "description": "Create a new audio track"},
+    {"name": "delete_track", "description": "Delete a track"},
+    {"name": "set_track_name", "description": "Rename a track"},
+    {"name": "set_track_volume", "description": "Set track volume (0.0-1.0)"},
+    {"name": "set_track_panning", "description": "Set track panning (-1.0 left to 1.0 right)"},
+    {"name": "set_track_mute", "description": "Mute or unmute a track"},
+    {"name": "set_track_solo", "description": "Solo or unsolo a track"},
+    {"name": "set_track_arm", "description": "Arm or disarm a track for recording"},
+    {"name": "set_track_send", "description": "Set send level to a return track"},
+    {"name": "set_master_volume", "description": "Set master output volume"},
+    {"name": "create_clip", "description": "Create an empty MIDI clip"},
+    {"name": "add_notes_to_clip", "description": "Add MIDI notes to a clip"},
+    {"name": "set_clip_name", "description": "Rename a clip"},
+    {"name": "set_clip_loop", "description": "Set clip loop start and end points"},
+    {"name": "duplicate_clip", "description": "Duplicate a clip to the next empty slot"},
+    {"name": "delete_clip", "description": "Delete a clip"},
+    {"name": "fire_clip", "description": "Launch a clip"},
+    {"name": "stop_clip", "description": "Stop a playing clip"},
+    {"name": "create_scene", "description": "Create a new scene"},
+    {"name": "fire_scene", "description": "Launch an entire scene"},
+    {"name": "delete_scene", "description": "Delete a scene"},
+    {"name": "load_instrument_or_effect", "description": "Load an instrument or effect by browser URI"},
+    {"name": "load_drum_kit", "description": "Load a drum rack and kit"},
+    {"name": "set_device_parameter", "description": "Set a device parameter value"},
+    {"name": "set_device_enabled", "description": "Enable or bypass a device"},
+    {"name": "delete_device", "description": "Remove a device from a track"},
+    {"name": "set_tempo", "description": "Set session tempo in BPM"},
+    {"name": "start_playback", "description": "Start playing the session"},
+    {"name": "stop_playback", "description": "Stop playing the session"},
+    {"name": "set_record_mode", "description": "Toggle global recording on/off"},
+    {"name": "set_overdub", "description": "Toggle MIDI overdub on/off"},
+    {"name": "set_metronome", "description": "Toggle metronome click on/off"},
+    {"name": "capture_midi", "description": "Capture recently played MIDI into a clip"},
+    {"name": "undo", "description": "Undo the last action"},
+    {"name": "redo", "description": "Redo the last undone action"},
+    {"name": "get_playback_position", "description": "Get current playback position in beats"},
+    {"name": "set_playback_position", "description": "Jump to a specific position in beats"}
+  ],
+  "tools_generated": false
+}

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "AbletonMCP": {
+      "command": "uv",
+      "args": ["run", "--with", ".", "python", "-m", "MCP_Server.server"],
+      "cwd": "."
+    }
+  }
+}
