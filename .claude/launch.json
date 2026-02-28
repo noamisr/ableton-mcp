@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ableton-mcp",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "ableton-mcp"],
+      "port": 9877
+    }
+  ]
+}

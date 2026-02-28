@@ -89,6 +89,12 @@ uvx ableton-mcp
      `Contents/App-Resources/MIDI Remote Scripts/`
    - Method 2: If it's not there in the first method, use the direct path (replace XX with your version number):
      `/Users/[Username]/Library/Preferences/Ableton/Live XX/User Remote Scripts`
+   - **This machine:** The script is installed at:
+     `~/Music/Ableton/User Library/Remote Scripts/AbletonMCP_Remote_Script/`
+     After modifying the script in the repo, copy it with:
+     ```bash
+     cp AbletonMCP_Remote_Script/__init__.py "/Users/noamisraeli/Music/Ableton/User Library/Remote Scripts/AbletonMCP_Remote_Script/__init__.py"
+     ```
    
    **For Windows:**
    - Method 1:

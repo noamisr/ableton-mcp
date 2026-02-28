@@ -105,7 +105,8 @@ class AbletonConnection:
             "create_midi_track", "create_audio_track", "set_track_name",
             "create_clip", "add_notes_to_clip", "set_clip_name",
             "set_tempo", "fire_clip", "stop_clip", "set_device_parameter",
-            "start_playback", "stop_playback", "load_instrument_or_effect"
+            "start_playback", "stop_playback", "load_instrument_or_effect",
+            "set_song_time"
         ]
         
         try:
@@ -601,6 +602,48 @@ def get_browser_items_at_path(ctx: Context, path: str) -> str:
         else:
             logger.error(f"Error getting browser items at path: {error_msg}")
             return f"Error getting browser items at path: {error_msg}"
+
+@mcp.tool()
+def set_song_time(ctx: Context, time: float) -> str:
+    """
+    Move the playhead to a specific position in the arrangement.
+
+    Parameters:
+    - time: Position in beats (e.g. bar 5 in 3/4 = beat 12.0)
+    """
+    try:
+        ableton = get_ableton_connection()
+        result = ableton.send_command("set_song_time", {"time": time})
+        return f"Playhead moved to beat {result.get('current_song_time', time)}"
+    except Exception as e:
+        logger.error(f"Error setting song time: {str(e)}")
+        return f"Error setting song time: {str(e)}"
+
+@mcp.tool()
+def search_track_notes(ctx: Context, track_index: int) -> str:
+    """
+    Search for the first note in a track's arrangement and return its bar number.
+
+    Parameters:
+    - track_index: The index of the track to search for notes
+    """
+    try:
+        ableton = get_ableton_connection()
+        result = ableton.send_command("search_track_notes", {"track_index": track_index})
+
+        if result.get("found"):
+            bar_num = result.get("bar_number", 0)
+            beat = result.get("beat_in_bar", 0)
+            track_name = result.get("track_name", "Unknown")
+            note_details = result.get("note_details", {})
+            pitch = note_details.get("note_pitch", 0)
+            return f"First note found in track {track_index} ({track_name}) at Bar {bar_num}, Beat {beat}. Note pitch: {pitch}"
+        else:
+            error = result.get("message") or result.get("error", "No notes found")
+            return f"No notes found in track {track_index}: {error}"
+    except Exception as e:
+        logger.error(f"Error searching track notes: {str(e)}")
+        return f"Error searching track notes: {str(e)}"
 
 @mcp.tool()
 def load_drum_kit(ctx: Context, track_index: int, rack_uri: str, kit_path: str) -> str:
