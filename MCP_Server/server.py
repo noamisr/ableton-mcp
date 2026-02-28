@@ -1,11 +1,17 @@
 # ableton_mcp_server.py
 from mcp.server.fastmcp import FastMCP, Context
+from mcp.types import ToolAnnotations
 import socket
 import json
 import logging
 from dataclasses import dataclass
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Dict, Any, List, Union
+
+# Tool annotation presets
+READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=True)
+MODIFYING = ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True)
+DESTRUCTIVE = ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=True)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
@@ -268,7 +274,7 @@ def get_ableton_connection():
 
 # Core Tool endpoints
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 def get_session_info(ctx: Context) -> str:
     """Get detailed information about the current Ableton session"""
     try:
@@ -279,7 +285,7 @@ def get_session_info(ctx: Context) -> str:
         logger.error(f"Error getting session info from Ableton: {str(e)}")
         return f"Error getting session info: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 def get_track_info(ctx: Context, track_index: int) -> str:
     """
     Get detailed information about a specific track in Ableton.
@@ -295,7 +301,7 @@ def get_track_info(ctx: Context, track_index: int) -> str:
         logger.error(f"Error getting track info from Ableton: {str(e)}")
         return f"Error getting track info: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def create_midi_track(ctx: Context, index: int = -1) -> str:
     """
     Create a new MIDI track in the Ableton session.
@@ -312,7 +318,7 @@ def create_midi_track(ctx: Context, index: int = -1) -> str:
         return f"Error creating MIDI track: {str(e)}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_track_name(ctx: Context, track_index: int, name: str) -> str:
     """
     Set the name of a track.
@@ -329,7 +335,7 @@ def set_track_name(ctx: Context, track_index: int, name: str) -> str:
         logger.error(f"Error setting track name: {str(e)}")
         return f"Error setting track name: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def create_clip(ctx: Context, track_index: int, clip_index: int, length: float = 4.0) -> str:
     """
     Create a new MIDI clip in the specified track and clip slot.
@@ -351,7 +357,7 @@ def create_clip(ctx: Context, track_index: int, clip_index: int, length: float =
         logger.error(f"Error creating clip: {str(e)}")
         return f"Error creating clip: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def add_notes_to_clip(
     ctx: Context, 
     track_index: int, 
@@ -378,7 +384,7 @@ def add_notes_to_clip(
         logger.error(f"Error adding notes to clip: {str(e)}")
         return f"Error adding notes to clip: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_clip_name(ctx: Context, track_index: int, clip_index: int, name: str) -> str:
     """
     Set the name of a clip.
@@ -400,7 +406,7 @@ def set_clip_name(ctx: Context, track_index: int, clip_index: int, name: str) ->
         logger.error(f"Error setting clip name: {str(e)}")
         return f"Error setting clip name: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_tempo(ctx: Context, tempo: float) -> str:
     """
     Set the tempo of the Ableton session.
@@ -417,7 +423,7 @@ def set_tempo(ctx: Context, tempo: float) -> str:
         return f"Error setting tempo: {str(e)}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def load_instrument_or_effect(ctx: Context, track_index: int, uri: str) -> str:
     """
     Load an instrument or effect onto a track using its URI.
@@ -447,7 +453,7 @@ def load_instrument_or_effect(ctx: Context, track_index: int, uri: str) -> str:
         logger.error(f"Error loading instrument by URI: {str(e)}")
         return f"Error loading instrument by URI: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def fire_clip(ctx: Context, track_index: int, clip_index: int) -> str:
     """
     Start playing a clip.
@@ -467,7 +473,7 @@ def fire_clip(ctx: Context, track_index: int, clip_index: int) -> str:
         logger.error(f"Error firing clip: {str(e)}")
         return f"Error firing clip: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def stop_clip(ctx: Context, track_index: int, clip_index: int) -> str:
     """
     Stop playing a clip.
@@ -487,7 +493,7 @@ def stop_clip(ctx: Context, track_index: int, clip_index: int) -> str:
         logger.error(f"Error stopping clip: {str(e)}")
         return f"Error stopping clip: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def start_playback(ctx: Context) -> str:
     """Start playing the Ableton session."""
     try:
@@ -498,7 +504,7 @@ def start_playback(ctx: Context) -> str:
         logger.error(f"Error starting playback: {str(e)}")
         return f"Error starting playback: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def stop_playback(ctx: Context) -> str:
     """Stop playing the Ableton session."""
     try:
@@ -509,7 +515,7 @@ def stop_playback(ctx: Context) -> str:
         logger.error(f"Error stopping playback: {str(e)}")
         return f"Error stopping playback: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 def get_browser_tree(ctx: Context, category_type: str = "all") -> str:
     """
     Get a hierarchical tree of browser categories from Ableton.
@@ -572,7 +578,7 @@ def get_browser_tree(ctx: Context, category_type: str = "all") -> str:
             logger.error(f"Error getting browser tree: {error_msg}")
             return f"Error getting browser tree: {error_msg}"
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 def get_browser_items_at_path(ctx: Context, path: str) -> str:
     """
     Get browser items at a specific path in Ableton's browser.
@@ -613,7 +619,7 @@ def get_browser_items_at_path(ctx: Context, path: str) -> str:
             logger.error(f"Error getting browser items at path: {error_msg}")
             return f"Error getting browser items at path: {error_msg}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def load_drum_kit(ctx: Context, track_index: int, rack_uri: str, kit_path: str) -> str:
     """
     Load a drum rack and then load a specific drum kit into it.
@@ -666,7 +672,7 @@ def load_drum_kit(ctx: Context, track_index: int, rack_uri: str, kit_path: str) 
 # Mixing Tools
 # =========================================================================
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_track_volume(ctx: Context, track_index: int, volume: float) -> str:
     """
     Set the volume of a track.
@@ -683,7 +689,7 @@ def set_track_volume(ctx: Context, track_index: int, volume: float) -> str:
         logger.error(f"Error setting track volume: {str(e)}")
         return f"Error setting track volume: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_track_panning(ctx: Context, track_index: int, panning: float) -> str:
     """
     Set the panning of a track.
@@ -700,7 +706,7 @@ def set_track_panning(ctx: Context, track_index: int, panning: float) -> str:
         logger.error(f"Error setting track panning: {str(e)}")
         return f"Error setting track panning: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_track_mute(ctx: Context, track_index: int, mute: bool) -> str:
     """
     Mute or unmute a track.
@@ -718,7 +724,7 @@ def set_track_mute(ctx: Context, track_index: int, mute: bool) -> str:
         logger.error(f"Error setting track mute: {str(e)}")
         return f"Error setting track mute: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_track_solo(ctx: Context, track_index: int, solo: bool) -> str:
     """
     Solo or unsolo a track.
@@ -736,7 +742,7 @@ def set_track_solo(ctx: Context, track_index: int, solo: bool) -> str:
         logger.error(f"Error setting track solo: {str(e)}")
         return f"Error setting track solo: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_track_arm(ctx: Context, track_index: int, arm: bool) -> str:
     """
     Arm or disarm a track for recording.
@@ -754,7 +760,7 @@ def set_track_arm(ctx: Context, track_index: int, arm: bool) -> str:
         logger.error(f"Error setting track arm: {str(e)}")
         return f"Error setting track arm: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_track_send(ctx: Context, track_index: int, send_index: int, value: float) -> str:
     """
     Set the send level for a track.
@@ -774,7 +780,7 @@ def set_track_send(ctx: Context, track_index: int, send_index: int, value: float
         logger.error(f"Error setting track send: {str(e)}")
         return f"Error setting track send: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 def get_return_track_info(ctx: Context, track_index: int) -> str:
     """
     Get detailed information about a return track (e.g., Return A, Return B).
@@ -790,7 +796,7 @@ def get_return_track_info(ctx: Context, track_index: int) -> str:
         logger.error(f"Error getting return track info: {str(e)}")
         return f"Error getting return track info: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_master_volume(ctx: Context, volume: float) -> str:
     """
     Set the master track volume.
@@ -811,7 +817,7 @@ def set_master_volume(ctx: Context, volume: float) -> str:
 # Arrangement & Scene Tools
 # =========================================================================
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def create_audio_track(ctx: Context, index: int = -1) -> str:
     """
     Create a new audio track in the Ableton session.
@@ -827,7 +833,7 @@ def create_audio_track(ctx: Context, index: int = -1) -> str:
         logger.error(f"Error creating audio track: {str(e)}")
         return f"Error creating audio track: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=DESTRUCTIVE)
 def delete_track(ctx: Context, track_index: int) -> str:
     """
     Delete a track from the Ableton session.
@@ -843,7 +849,7 @@ def delete_track(ctx: Context, track_index: int) -> str:
         logger.error(f"Error deleting track: {str(e)}")
         return f"Error deleting track: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 def get_scene_info(ctx: Context, scene_index: int) -> str:
     """
     Get information about a scene (a row of clip slots across all tracks).
@@ -859,7 +865,7 @@ def get_scene_info(ctx: Context, scene_index: int) -> str:
         logger.error(f"Error getting scene info: {str(e)}")
         return f"Error getting scene info: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def create_scene(ctx: Context, index: int = -1) -> str:
     """
     Create a new scene in the Ableton session.
@@ -875,7 +881,7 @@ def create_scene(ctx: Context, index: int = -1) -> str:
         logger.error(f"Error creating scene: {str(e)}")
         return f"Error creating scene: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def fire_scene(ctx: Context, scene_index: int) -> str:
     """
     Launch a scene, firing all clips in that row simultaneously.
@@ -891,7 +897,7 @@ def fire_scene(ctx: Context, scene_index: int) -> str:
         logger.error(f"Error firing scene: {str(e)}")
         return f"Error firing scene: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=DESTRUCTIVE)
 def delete_scene(ctx: Context, scene_index: int) -> str:
     """
     Delete a scene from the Ableton session.
@@ -907,7 +913,7 @@ def delete_scene(ctx: Context, scene_index: int) -> str:
         logger.error(f"Error deleting scene: {str(e)}")
         return f"Error deleting scene: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def duplicate_clip(ctx: Context, track_index: int, clip_index: int) -> str:
     """
     Duplicate a clip to the next available empty clip slot.
@@ -927,7 +933,7 @@ def duplicate_clip(ctx: Context, track_index: int, clip_index: int) -> str:
         logger.error(f"Error duplicating clip: {str(e)}")
         return f"Error duplicating clip: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=DESTRUCTIVE)
 def delete_clip(ctx: Context, track_index: int, clip_index: int) -> str:
     """
     Delete a clip from a clip slot.
@@ -946,7 +952,7 @@ def delete_clip(ctx: Context, track_index: int, clip_index: int) -> str:
         logger.error(f"Error deleting clip: {str(e)}")
         return f"Error deleting clip: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 def get_clip_notes(ctx: Context, track_index: int, clip_index: int) -> str:
     """
     Get all MIDI notes from a clip. Returns note data including pitch, start time,
@@ -966,7 +972,7 @@ def get_clip_notes(ctx: Context, track_index: int, clip_index: int) -> str:
         logger.error(f"Error getting clip notes: {str(e)}")
         return f"Error getting clip notes: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_clip_loop(ctx: Context, track_index: int, clip_index: int, loop_start: float, loop_end: float) -> str:
     """
     Set the loop points of a clip and enable looping.
@@ -993,7 +999,7 @@ def set_clip_loop(ctx: Context, track_index: int, clip_index: int, loop_start: f
 # Device Control Tools
 # =========================================================================
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 def get_device_info(ctx: Context, track_index: int, device_index: int) -> str:
     """
     Get detailed information about a device on a track, including all its parameters.
@@ -1012,7 +1018,7 @@ def get_device_info(ctx: Context, track_index: int, device_index: int) -> str:
         logger.error(f"Error getting device info: {str(e)}")
         return f"Error getting device info: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=READ_ONLY)
 def get_device_parameters(ctx: Context, track_index: int, device_index: int) -> str:
     """
     Get all parameters of a device with their current values, min, max, and names.
@@ -1032,7 +1038,7 @@ def get_device_parameters(ctx: Context, track_index: int, device_index: int) -> 
         logger.error(f"Error getting device parameters: {str(e)}")
         return f"Error getting device parameters: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_device_parameter(ctx: Context, track_index: int, device_index: int, param_index: int, value: float) -> str:
     """
     Set a specific parameter value on a device.
@@ -1054,7 +1060,7 @@ def set_device_parameter(ctx: Context, track_index: int, device_index: int, para
         logger.error(f"Error setting device parameter: {str(e)}")
         return f"Error setting device parameter: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_device_enabled(ctx: Context, track_index: int, device_index: int, enabled: bool) -> str:
     """
     Enable or disable (bypass) a device on a track.
@@ -1075,7 +1081,7 @@ def set_device_enabled(ctx: Context, track_index: int, device_index: int, enable
         logger.error(f"Error setting device enabled: {str(e)}")
         return f"Error setting device enabled: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=DESTRUCTIVE)
 def delete_device(ctx: Context, track_index: int, device_index: int) -> str:
     """
     Remove a device from a track.
@@ -1099,7 +1105,7 @@ def delete_device(ctx: Context, track_index: int, device_index: int) -> str:
 # Transport & Recording Tools
 # =========================================================================
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_record_mode(ctx: Context, enabled: bool) -> str:
     """
     Enable or disable global recording mode. When enabled, armed tracks will record.
@@ -1116,7 +1122,7 @@ def set_record_mode(ctx: Context, enabled: bool) -> str:
         logger.error(f"Error setting record mode: {str(e)}")
         return f"Error setting record mode: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_overdub(ctx: Context, enabled: bool) -> str:
     """
     Enable or disable MIDI overdub mode. When enabled, new MIDI notes are added
@@ -1134,7 +1140,7 @@ def set_overdub(ctx: Context, enabled: bool) -> str:
         logger.error(f"Error setting overdub: {str(e)}")
         return f"Error setting overdub: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def set_metronome(ctx: Context, enabled: bool) -> str:
     """
     Enable or disable the metronome (click track).
@@ -1151,7 +1157,7 @@ def set_metronome(ctx: Context, enabled: bool) -> str:
         logger.error(f"Error setting metronome: {str(e)}")
         return f"Error setting metronome: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def capture_midi(ctx: Context) -> str:
     """
     Capture recently played MIDI notes into a new clip. Equivalent to pressing
@@ -1166,7 +1172,7 @@ def capture_midi(ctx: Context) -> str:
         logger.error(f"Error capturing MIDI: {str(e)}")
         return f"Error capturing MIDI: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def undo(ctx: Context) -> str:
     """Undo the last action in Ableton Live."""
     try:
@@ -1177,7 +1183,7 @@ def undo(ctx: Context) -> str:
         logger.error(f"Error undoing: {str(e)}")
         return f"Error undoing: {str(e)}"
 
-@mcp.tool()
+@mcp.tool(annotations=MODIFYING)
 def redo(ctx: Context) -> str:
     """Redo the last undone action in Ableton Live."""
     try:
