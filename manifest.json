@@ -31,8 +31,10 @@
     "entry_point": "MCP_Server/server.py",
     "mcp_config": {
       "command": "uv",
-      "args": ["run", "--with", "${__dirname}", "python", "-m", "MCP_Server.server"],
-      "env": {}
+      "args": ["run", "--directory", "${__dirname}", "python", "-m", "MCP_Server.server"],
+      "env": {
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
     }
   },
   "compatibility": {
